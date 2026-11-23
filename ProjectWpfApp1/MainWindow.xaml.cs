@@ -19,19 +19,21 @@ namespace ProjectWpfApp1
         public ObservableCollection<Item> Tasks { get; set; }
         public int MaxInventory = 5; // Ограничение объёма инвентаря
 
-        // Карта комнат 3x3 ("" = стены / комнаты нет)
-        string[,] map = new string[3, 3]
+         // Карта комнат 5x5 ("" = стены / комнаты нет)
+        string[,] map = new string[5, 5]
         {
-            { "", "/Images/room_1.jpg", "" },
-            { "/Images/room_1.jpg", "/Images/room_1.jpg", "/Images/room_1.jpg" },
-            { "", "/Images/room_1.jpg", "" }
+            { "", "/Images/finish_room_1.jpg", "", "/Images/finish_room_2.jpg", "" },
+            { "/Images/room_1.jpg", "/Images/crossroad_1.jpg", "/Images/room_2.jpg", "/Images/crossroad_2.jpg", "/Images/room_3.jpg" },
+            { "", "/Images/crossroad_3.jpg", "/Images/room_4.jpg", "/Images/crossroad_4.jpg", "" },
+            { "/Images/finish_room_3.jpg", "/Images/crossroad_5.jpg", "/Images/finish_room_4.jpg", "/Images/room_1.jpg", "" },
+            { "", "", "", "", "" }
         };
 
-        // Позиция игрока (старт: строка 2, столбец 1)
+        // Позиция игрока (старт: строка 2, столбец 2)
         int playerRow = 2;
-        int playerCol = 1;
+        int playerCol = 2;
 
-        // Финиш (строка 0, столбец 1)
+        // Финиш (строка 0, столбец 1 или 3)
         int finishRow = 0;
         int finishCol = 1;
 
@@ -109,7 +111,7 @@ namespace ProjectWpfApp1
             else if (path == "Пойти вправо") nextCol++;
 
             // Если выход за границу или пустая клетка
-            if (nextRow < 0 || nextRow >= 3 || nextCol < 0 || nextCol >= 3 || map[nextRow, nextCol] == "")
+            if (nextRow < 0 || nextRow >= 5 || nextCol < 0 || nextCol >= 5 || map[nextRow, nextCol] == "")
             {
                 Print("Туда пройти нельзя");
                 return;
@@ -134,8 +136,29 @@ namespace ProjectWpfApp1
 
         public void ShowRoom()
         {
-            var uri = new Uri($"pack://application:,,,{map[playerRow, playerCol]}", UriKind.Absolute);
-            MyImage.Source = new BitmapImage(uri);
+            try
+            {
+                string imagePath = map[playerRow, playerCol];
+                if (string.IsNullOrEmpty(imagePath))
+                {
+                    MyImage.Source = null;
+                    return;
+                }
+
+                BitmapImage bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri($"pack://application:,,,{imagePath}", UriKind.Absolute);
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                MyImage.Source = bitmap;
+                Print($"Позиция: ({playerRow}, {playerCol})");
+            }
+            catch (Exception ex)
+            {
+                Print($"Ошибка загрузки: {ex.Message}");
+            }
         }
 
         public void Print(string text)
